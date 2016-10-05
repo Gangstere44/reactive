@@ -8,18 +8,18 @@ public class VehicleState {
 	private static int counter = 0;
 
 	private City curCity;
-	private City destCity;
+	private City taskDestCity;
 	private int id;
 
-	public VehicleState(City curCity, City destCity) {
+	public VehicleState(City curCity, City taskDestCity) {
 		this.curCity = curCity;
-		this.destCity = destCity;
+		this.taskDestCity = taskDestCity;
 		this.id = counter++;
 	}
 
 	public VehicleState(City curCity) {
 		this.curCity = curCity;
-		this.destCity = null;
+		this.taskDestCity = null;
 		this.id = counter++;
 	}
 
@@ -27,8 +27,8 @@ public class VehicleState {
 		return curCity;
 	}
 
-	public City getDestinationCity() {
-		return destCity;
+	public City getTaskDestinationCity() {
+		return taskDestCity;
 	}
 
 	public int getId() {
