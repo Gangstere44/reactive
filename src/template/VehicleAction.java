@@ -6,7 +6,8 @@ public class VehicleAction {
 
 	private static int counter = 0;
 
-	private boolean take;
+	private boolean take; // if true take package for destCity
+						  // else move to destCity
 	private City destCity;
 	private int id;
 

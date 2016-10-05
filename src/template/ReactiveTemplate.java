@@ -40,10 +40,12 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		this.numActions = 0;
 		this.myAgent = agent;
 
+		td.
+/*
 		this.numCities = topology.size();
 		states = new VehicleState[numCities * numCities];
 
-		actions = new VehicleAction[numCities + 1];
+		actions = new VehicleAction[2 * numCities];
 
 		initStates(topology);
 		initActions(topology);
@@ -53,8 +55,7 @@ public class ReactiveTemplate implements ReactiveBehavior {
 
 		initRewards();
 		initTransitions();
-
-
+*/
 
 	}
 
@@ -76,6 +77,8 @@ public class ReactiveTemplate implements ReactiveBehavior {
 					+ (myAgent.getTotalProfit() / (double) numActions) + ")");
 		}
 		numActions++;
+
+		availableTask.
 
 		return action;
 	}
@@ -107,10 +110,10 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		for (int i = 0; i < numCities; i++) {
 
 			actions[i] = new VehicleAction(false, topology.cities().get(i));
+			actions[i + numCities] = new VehicleAction(true, topology.cities().get(i));
 
 		}
 
-		actions[numCities] = new VehicleAction(true, null);
 	}
 
 	private void initRewards() {
@@ -126,7 +129,7 @@ public class ReactiveTemplate implements ReactiveBehavior {
 	}
 
 	private long giveReward(VehicleState s, VehicleAction a) {
-
+		return 0;
 	}
 
 	private void initTransitions() {
@@ -135,10 +138,30 @@ public class ReactiveTemplate implements ReactiveBehavior {
 
 			for (int j = 0; j < actions.length; j++) {
 
-				transitions[i][j] =
+				transitions[i][j] = giveTransition(states[i], actions[j]).getId();
 
 			}
 		}
+
+	}
+
+	private VehicleState giveTransition(VehicleState s, VehicleAction a) {
+
+		if(a.getTake()) {
+
+
+
+		} else {
+
+		}
+
+		return null;
+
+	}
+
+	private VehicleState findState(int citiesId) {
+
+		return null;
 
 	}
 }
