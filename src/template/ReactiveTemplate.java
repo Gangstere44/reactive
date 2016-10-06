@@ -15,7 +15,7 @@ import logist.topology.Topology;
 import logist.topology.Topology.City;
 
 public class ReactiveTemplate implements ReactiveBehavior {
-	
+
 	private static final double EPSILON = 0.000001;
 
 	private Random random;
@@ -25,6 +25,7 @@ public class ReactiveTemplate implements ReactiveBehavior {
 	private Double discount;
 
 	private int numCities;
+	private int costPerKm;
 	private TaskDistribution td;
 	private Topology topology;
 	private VehicleAction[] actions;
@@ -32,7 +33,7 @@ public class ReactiveTemplate implements ReactiveBehavior {
 
 	private double[][] rewards;
 	private double[][][] transitions;
-	
+
 	private VehicleAction[] bestActions;
 	private double[] V;
 	private double[][] Q;
@@ -49,11 +50,13 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		this.pPickup = discount;
 		this.numActions = 0;
 		this.myAgent = agent;
-		
+
+		this.costPerKm = agent.vehicles().get(0).costPerKm();
+
 		this.numCities = topology.size();
 		this.td = td;
 		this.topology = topology;
-		
+
 		states = new VehicleState[numCities * numCities];
 		actions = new VehicleAction[2 * numCities];
 
@@ -66,30 +69,30 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		bestActions = new VehicleAction[states.length];
 		V = new double[states.length];
 		Q = new double[states.length][actions.length];
-		
+
 		initRewards();
 		initTransitions();
-		
+
 		System.out.println("Will start value iterate.");
-		
+
 		valueIterate();
-		
+
 		System.out.println("Value iterate done.");
-		
+
 		//printTaskDistribution();
-		
+
 		//printQValues();
 
 	}
-	
+
 	private void printQValues() {
 		for (int i = 0; i < states.length; i++) {
 			for (int j = 0; j < actions.length; j++) {
-				System.out.println("Q for when in " + states[i].getCurrentCity() + " with task for " 
+				System.out.println("Q for when in " + states[i].getCurrentCity() + " with task for "
 				+ states[i].getTaskDestinationCity() + ", taking action: take = " + actions[j].getTake() + " or moving to " + actions[j].getDestinationCity() + " : reward = " + Q[i][j]);
 			}
 		}
-		
+
 	}
 
 	private void printTaskDistribution() {
@@ -101,26 +104,28 @@ public class ReactiveTemplate implements ReactiveBehavior {
 				System.out.println("----------------------");
 			}
 		}
-		
+
 	}
 
 	@Override
 	public Action act(Vehicle vehicle, Task availableTask) {
-		
+
 		Action action;
-		
+
 		VehicleAction vAction = getActionForState(vehicle.getCurrentCity(), availableTask == null ? null : availableTask.deliveryCity);
-		
+
 		// Random for exploration (needed?)
 		if (availableTask == null || !vAction.getTake()) {
 			if (availableTask != null) {
-				System.out.println("It was available hohohohohoohh, with reward = " + availableTask.reward);
+				System.out.println("[MISS "+vehicle.name()+"] with reward = " + availableTask.reward);
 			}
+
 			// TODO: Need to check arg here
-			if (vAction.getDestinationCity() == null) {
+			if (vAction.getDestinationCity() == null || !vehicle.getCurrentCity().hasNeighbor(vAction.getDestinationCity())) {
 				System.out.println("Destination city was null!!!!!!!");
 				action = new Move(vehicle.getCurrentCity().randomNeighbor(random));
 			}
+
 			else {
 				action = new Move(vAction.getDestinationCity());
 			}
@@ -128,17 +133,17 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		else {
 			action = new Pickup(availableTask);
 		}
-		
+
 		if (numActions >= 1) {
-			System.out.println("The total profit after " + numActions
+			System.out.println("["+ vehicle.name() +"]The total profit after " + numActions
 					+ " actions is " + myAgent.getTotalProfit()
 					+ " (average profit: "
 					+ (myAgent.getTotalProfit() / (double) numActions) + ")");
 		}
 		numActions++;
-		
+
 		return action;
-		
+
 		/*
 		//Code from before (random)
 		Action action;
@@ -161,14 +166,14 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		return action;
 		*/
 	}
-	
+
 	private VehicleAction getActionForState(City curCity, City destCity) {
 		for (int i = 0; i < states.length; i++) {
 			if (destCity == null && states[i].getTaskDestinationCity() == null && states[i].getCurrentCity().id == curCity.id) {
 				return bestActions[i];
 			}
 		}
-		
+
 		for (int i = 0; i < states.length; i++) {
 			if (states[i].getCurrentCity().id == curCity.id && states[i].getTaskDestinationCity() != null && states[i].getTaskDestinationCity().id == destCity.id) {
 				return bestActions[i];
@@ -178,7 +183,7 @@ public class ReactiveTemplate implements ReactiveBehavior {
 	}
 
 	private void valueIterate() {
-		double totalDiff = Long.MAX_VALUE;
+		double totalDiff = Double.MAX_VALUE;
 		int iter = 1;
 		while (totalDiff > EPSILON) {
 			System.out.println("Iteration no: " + iter + " with totalDiff = " + totalDiff);
@@ -189,9 +194,9 @@ public class ReactiveTemplate implements ReactiveBehavior {
 				}
 				double maxQValue = (Double) maxQValue(i)[0];
 				VehicleAction maxQAction = (VehicleAction) maxQValue(i)[1];
-				
+
 				totalDiff += Math.abs(maxQValue - V[i]);
-				
+
 				V[i] = maxQValue;
 				bestActions[i] = maxQAction;
 			}
@@ -226,10 +231,10 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		for (int i = 0; i < numCities; i++) {
 			for (int j = 0; j < numCities; j++) {
 				if (i == j) {
-					states[i * numCities + j] = 
+					states[i * numCities + j] =
 							new VehicleState(topology.cities().get(i));
 				} else {
-					states[i * numCities + j] = 
+					states[i * numCities + j] =
 							new VehicleState(topology.cities().get(i), topology.cities().get(j));
 				}
 			}
@@ -251,7 +256,7 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		}
 	}
 
-	
+
 	// TODO: Should we also use something with the distance????
 	private double giveReward(VehicleState s, VehicleAction a) {
 		if (a.getTake()) {
@@ -260,9 +265,7 @@ public class ReactiveTemplate implements ReactiveBehavior {
 				return -1000000;
 			}
 			else {
-				System.out.println("Distance to: " + s.getCurrentCity().distanceTo(s.getTaskDestinationCity()));
-				System.out.println("Distance units: " + s.getCurrentCity().distanceUnitsTo(s.getTaskDestinationCity()));
-				return td.reward(s.getCurrentCity(), s.getTaskDestinationCity()) - s.getCurrentCity().distanceTo(s.getTaskDestinationCity());
+				return td.reward(s.getCurrentCity(), s.getTaskDestinationCity()) - s.getCurrentCity().distanceTo(s.getTaskDestinationCity()) * costPerKm + computeAveragePossibleRewardWithDistance(s.getTaskDestinationCity());
 			}
 		}
 		else {
@@ -278,28 +281,28 @@ public class ReactiveTemplate implements ReactiveBehavior {
 				else {
 					distance = s.getCurrentCity().distanceTo(s.getTaskDestinationCity());
 				}
-				return computeAveragePossibleRewardWithDistance(a.getDestinationCity()) - (td.reward(s.getCurrentCity(), s.getTaskDestinationCity()) - distance);
+				return computeAveragePossibleRewardWithDistance(a.getDestinationCity()) - distance * costPerKm;
 			}
 		}
 	}
-
+/*
 	private double computeAveragePossibleReward(City city) {
 		double totalPossibleReward = 0;
 		for (int i = 0; i < numCities; i++) {
 			double tmpReward = td.reward(city, topology.cities().get(i)) * td.probability(city, topology.cities().get(i));
 			totalPossibleReward += tmpReward;
 		}
-		
+
 		return totalPossibleReward;
 	}
-	
+*/
 	private double computeAveragePossibleRewardWithDistance(City city) {
 		double totalPossibleReward = 0;
 		for (int i = 0; i < numCities; i++) {
-			double tmpReward = (td.reward(city, topology.cities().get(i)) - city.distanceTo(topology.cities().get(i))) * td.probability(city, topology.cities().get(i));
+			double tmpReward = (td.reward(city, topology.cities().get(i)) - city.distanceTo(topology.cities().get(i)) * costPerKm) * td.probability(city, topology.cities().get(i));
 			totalPossibleReward += tmpReward;
 		}
-		
+
 		return totalPossibleReward;
 	}
 

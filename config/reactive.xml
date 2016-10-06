@@ -12,8 +12,8 @@
 	<!-- load agents -->
 	<agents import="config/agents.xml" />
 	
-	<!-- define task distribution -->
-	<tasks number="10" rngSeed="3590420242192152424">
+	
+	<tasks number="10" rngSeed="3590420242192152425">
 		<!--
 			the probabilities, rewards and weight of tasks
 		-->
@@ -25,7 +25,7 @@
 			the probability that there is no task in a city
 		-->
 		<no-task distribution="uniform" min="0.2" max="0.4" />
-	</tasks>
+	<!-- define task distribution --></tasks>
 	
 	<!-- the companies and vehicles in the simulation -->
 	<companies>
