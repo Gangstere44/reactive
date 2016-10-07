@@ -1,14 +1,14 @@
 package template;
 
-import java.util.List;
+import java.util.HashMap;
 import java.util.Random;
 
-import logist.simulation.Vehicle;
 import logist.agent.Agent;
 import logist.behavior.ReactiveBehavior;
 import logist.plan.Action;
 import logist.plan.Action.Move;
 import logist.plan.Action.Pickup;
+import logist.simulation.Vehicle;
 import logist.task.Task;
 import logist.task.TaskDistribution;
 import logist.topology.Topology;
@@ -31,12 +31,15 @@ public class ReactiveTemplate implements ReactiveBehavior {
 	private VehicleAction[] actions;
 	private VehicleState[] states;
 
-	private double[][] rewards;
+	// private double[][] rewards;
+	HashMap<Pair<Integer, Integer>, Double> rewards;
 	private double[][][] transitions;
 
 	private VehicleAction[] bestActions;
 	private double[] V;
-	private double[][] Q;
+	HashMap<Pair<Integer, Integer>, Double> Q;
+
+	// private double[][] Q;
 
 	@Override
 	public void setup(Topology topology, TaskDistribution td, Agent agent) {
@@ -63,12 +66,14 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		initStates();
 		initActions();
 
-		rewards = new double[states.length][actions.length];
+		// rewards = new double[states.length][actions.length];
+		rewards = new HashMap<Pair<Integer, Integer>, Double>();
 		transitions = new double[states.length][actions.length][states.length];
 
 		bestActions = new VehicleAction[states.length];
 		V = new double[states.length];
-		Q = new double[states.length][actions.length];
+		// Q = new double[states.length][actions.length];
+		Q = new HashMap<Pair<Integer, Integer>, Double>();
 
 		initRewards();
 		initTransitions();
@@ -79,28 +84,36 @@ public class ReactiveTemplate implements ReactiveBehavior {
 
 		System.out.println("Value iterate done.");
 
-		//printTaskDistribution();
+		// printTaskDistribution();
 
-		//printQValues();
+		// printQValues();
 
 	}
 
 	private void printQValues() {
 		for (int i = 0; i < states.length; i++) {
 			for (int j = 0; j < actions.length; j++) {
-				System.out.println("Q for when in " + states[i].getCurrentCity() + " with task for "
-				+ states[i].getTaskDestinationCity() + ", taking action: take = " + actions[j].getTake() + " or moving to " + actions[j].getDestinationCity() + " : reward = " + Q[i][j]);
+				System.out.println("Q for when in "
+						+ states[i].getCurrentCity() + " with task for "
+						+ states[i].getTaskDestinationCity()
+						+ ", taking action: take = " + actions[j].getTake()
+						+ " or moving to " + actions[j].getDestinationCity()
+						+ " : reward = "
+						+ Q.get(new Pair<Integer, Integer>(i, j)));
 			}
 		}
 
 	}
 
 	private void printTaskDistribution() {
-		for (City city1: topology.cities()) {
-			for (City city2: topology.cities()) {
-				System.out.println("From " + city1.name + " to " + city2.name + " : ");
-				System.out.println("Probability of task: " + td.probability(city1, city2));
-				System.out.println("Expected reward: " + td.reward(city1,  city2));
+		for (City city1 : topology.cities()) {
+			for (City city2 : topology.cities()) {
+				System.out.println("From " + city1.name + " to " + city2.name
+						+ " : ");
+				System.out.println("Probability of task: "
+						+ td.probability(city1, city2));
+				System.out.println("Expected reward: "
+						+ td.reward(city1, city2));
 				System.out.println("----------------------");
 			}
 		}
@@ -112,32 +125,36 @@ public class ReactiveTemplate implements ReactiveBehavior {
 
 		Action action;
 
-		VehicleAction vAction = getActionForState(vehicle.getCurrentCity(), availableTask == null ? null : availableTask.deliveryCity);
+		VehicleAction vAction = getActionForState(vehicle.getCurrentCity(),
+				availableTask == null ? null : availableTask.deliveryCity);
 
 		// Random for exploration (needed?)
 		if (availableTask == null || !vAction.getTake()) {
 			if (availableTask != null) {
-				System.out.println("[MISS "+vehicle.name()+"] with reward = " + availableTask.reward);
+				System.out.println("[MISS " + vehicle.name()
+						+ "] with reward = " + availableTask.reward);
 			}
 
 			// TODO: Need to check arg here
-			if (vAction.getDestinationCity() == null || !vehicle.getCurrentCity().hasNeighbor(vAction.getDestinationCity())) {
+			if (vAction.getDestinationCity() == null
+					|| !vehicle.getCurrentCity().hasNeighbor(
+							vAction.getDestinationCity())) {
 				System.out.println("Destination city was null!!!!!!!");
-				action = new Move(vehicle.getCurrentCity().randomNeighbor(random));
+				action = new Move(vehicle.getCurrentCity().randomNeighbor(
+						random));
 			}
 
 			else {
 				action = new Move(vAction.getDestinationCity());
 			}
-		}
-		else {
+		} else {
 			action = new Pickup(availableTask);
 		}
 
 		if (numActions >= 1) {
-			System.out.println("["+ vehicle.name() +"]The total profit after " + numActions
-					+ " actions is " + myAgent.getTotalProfit()
-					+ " (average profit: "
+			System.out.println("[" + vehicle.name()
+					+ "]The total profit after " + numActions + " actions is "
+					+ myAgent.getTotalProfit() + " (average profit: "
 					+ (myAgent.getTotalProfit() / (double) numActions) + ")");
 		}
 		numActions++;
@@ -145,37 +162,34 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		return action;
 
 		/*
-		//Code from before (random)
-		Action action;
-
-		if (availableTask == null || random.nextDouble() > pPickup) {
-			City currentCity = vehicle.getCurrentCity();
-			action = new Move(currentCity.randomNeighbor(random));
-		} else {
-			action = new Pickup(availableTask);
-		}
-
-		if (numActions >= 1) {
-			System.out.println("The total profit after " + numActions
-					+ " actions is " + myAgent.getTotalProfit()
-					+ " (average profit: "
-					+ (myAgent.getTotalProfit() / (double) numActions) + ")");
-		}
-		numActions++;
-
-		return action;
-		*/
+		 * //Code from before (random) Action action;
+		 *
+		 * if (availableTask == null || random.nextDouble() > pPickup) { City
+		 * currentCity = vehicle.getCurrentCity(); action = new
+		 * Move(currentCity.randomNeighbor(random)); } else { action = new
+		 * Pickup(availableTask); }
+		 *
+		 * if (numActions >= 1) { System.out.println("The total profit after " +
+		 * numActions + " actions is " + myAgent.getTotalProfit() +
+		 * " (average profit: " + (myAgent.getTotalProfit() / (double)
+		 * numActions) + ")"); } numActions++;
+		 *
+		 * return action;
+		 */
 	}
 
 	private VehicleAction getActionForState(City curCity, City destCity) {
 		for (int i = 0; i < states.length; i++) {
-			if (destCity == null && states[i].getTaskDestinationCity() == null && states[i].getCurrentCity().id == curCity.id) {
+			if (destCity == null && states[i].getTaskDestinationCity() == null
+					&& states[i].getCurrentCity().id == curCity.id) {
 				return bestActions[i];
 			}
 		}
 
 		for (int i = 0; i < states.length; i++) {
-			if (states[i].getCurrentCity().id == curCity.id && states[i].getTaskDestinationCity() != null && states[i].getTaskDestinationCity().id == destCity.id) {
+			if (states[i].getCurrentCity().id == curCity.id
+					&& states[i].getTaskDestinationCity() != null
+					&& states[i].getTaskDestinationCity().id == destCity.id) {
 				return bestActions[i];
 			}
 		}
@@ -186,11 +200,17 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		double totalDiff = Double.MAX_VALUE;
 		int iter = 1;
 		while (totalDiff > EPSILON) {
-			System.out.println("Iteration no: " + iter + " with totalDiff = " + totalDiff);
+			System.out.println("Iteration no: " + iter + " with totalDiff = "
+					+ totalDiff);
 			totalDiff = 0;
 			for (int i = 0; i < states.length; i++) {
 				for (int j = 0; j < actions.length; j++) {
-					Q[i][j] = rewards[i][j] + discount * sumTransitions(i, j);
+					Pair<Integer, Integer> inter = new Pair<Integer, Integer>(
+							i, j);
+					if (rewards.containsKey(inter)) {
+						Q.put(inter, rewards.get(inter) + discount
+								* sumTransitions(i, j));
+					}
 				}
 				double maxQValue = (Double) maxQValue(i)[0];
 				VehicleAction maxQAction = (VehicleAction) maxQValue(i)[1];
@@ -208,9 +228,12 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		double max = 0d;
 		VehicleAction best = null;
 		for (int i = 0; i < actions.length; i++) {
-			if (Q[state][i] > max) {
-				max = Q[state][i];
-				best = actions[i];
+			Pair<Integer, Integer> inter = new Pair<Integer, Integer>(state, i);
+			if (Q.containsKey(inter)) {
+				if (Q.get(inter) > max) {
+					max = Q.get(inter);
+					best = actions[i];
+				}
 			}
 		}
 		Object[] toReturn = new Object[2];
@@ -231,11 +254,11 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		for (int i = 0; i < numCities; i++) {
 			for (int j = 0; j < numCities; j++) {
 				if (i == j) {
-					states[i * numCities + j] =
-							new VehicleState(topology.cities().get(i));
+					states[i * numCities + j] = new VehicleState(topology
+							.cities().get(i));
 				} else {
-					states[i * numCities + j] =
-							new VehicleState(topology.cities().get(i), topology.cities().get(j));
+					states[i * numCities + j] = new VehicleState(topology
+							.cities().get(i), topology.cities().get(j));
 				}
 			}
 		}
@@ -251,55 +274,59 @@ public class ReactiveTemplate implements ReactiveBehavior {
 	private void initRewards() {
 		for (int i = 0; i < states.length; i++) {
 			for (int j = 0; j < actions.length; j++) {
-				rewards[i][j] = giveReward(states[i], actions[j]);
+				giveReward(states[i], i, actions[j], j);
 			}
 		}
 	}
 
-
 	// TODO: Should we also use something with the distance????
-	private double giveReward(VehicleState s, VehicleAction a) {
-		if (a.getTake()) {
-			if (s.getTaskDestinationCity() == null || s.getCurrentCity().id == s.getTaskDestinationCity().id) {
-				// Penalize if try to take but no task available
-				return -1000000;
-			}
-			else {
-				return td.reward(s.getCurrentCity(), s.getTaskDestinationCity()) - s.getCurrentCity().distanceTo(s.getTaskDestinationCity()) * costPerKm + computeAveragePossibleRewardWithDistance(s.getTaskDestinationCity());
-			}
+	private void giveReward(VehicleState s, int posS, VehicleAction a, int posA) {
+		if (a.getTake() && s.getTaskDestinationCity() != null
+				&& s.getCurrentCity().id != s.getTaskDestinationCity().id) {
+			rewards.put(
+					new Pair<Integer, Integer>(posS, posA),
+					td.reward(s.getCurrentCity(), s.getTaskDestinationCity())
+							- s.getCurrentCity().distanceTo(
+									s.getTaskDestinationCity())
+							* costPerKm
+							+ computeAveragePossibleRewardWithDistance(s
+									.getTaskDestinationCity()));
+
 		}
+
 		else {
-			if (!s.getCurrentCity().hasNeighbor(a.getDestinationCity())) {
-				// Penalize if not going to a neighbor
-				return -1000000;
-			}
-			else {
+			if (s.getCurrentCity().hasNeighbor(a.getDestinationCity())) {
 				double distance;
 				if (s.getTaskDestinationCity() == null) {
 					distance = 0;
+				} else {
+					distance = s.getCurrentCity().distanceTo(
+							s.getTaskDestinationCity());
 				}
-				else {
-					distance = s.getCurrentCity().distanceTo(s.getTaskDestinationCity());
-				}
-				return computeAveragePossibleRewardWithDistance(a.getDestinationCity()) - distance * costPerKm;
+				rewards.put(
+						new Pair<Integer, Integer>(posS, posA),
+						computeAveragePossibleRewardWithDistance(a
+								.getDestinationCity()) - distance * costPerKm);
+
 			}
 		}
 	}
-/*
-	private double computeAveragePossibleReward(City city) {
-		double totalPossibleReward = 0;
-		for (int i = 0; i < numCities; i++) {
-			double tmpReward = td.reward(city, topology.cities().get(i)) * td.probability(city, topology.cities().get(i));
-			totalPossibleReward += tmpReward;
-		}
 
-		return totalPossibleReward;
-	}
-*/
+	/*
+	 * private double computeAveragePossibleReward(City city) { double
+	 * totalPossibleReward = 0; for (int i = 0; i < numCities; i++) { double
+	 * tmpReward = td.reward(city, topology.cities().get(i)) *
+	 * td.probability(city, topology.cities().get(i)); totalPossibleReward +=
+	 * tmpReward; }
+	 *
+	 * return totalPossibleReward; }
+	 */
 	private double computeAveragePossibleRewardWithDistance(City city) {
 		double totalPossibleReward = 0;
 		for (int i = 0; i < numCities; i++) {
-			double tmpReward = (td.reward(city, topology.cities().get(i)) - city.distanceTo(topology.cities().get(i)) * costPerKm) * td.probability(city, topology.cities().get(i));
+			double tmpReward = (td.reward(city, topology.cities().get(i)) - city
+					.distanceTo(topology.cities().get(i)) * costPerKm)
+					* td.probability(city, topology.cities().get(i));
 			totalPossibleReward += tmpReward;
 		}
 
@@ -310,27 +337,35 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		for (int i = 0; i < states.length; i++) {
 			for (int j = 0; j < actions.length; j++) {
 				for (int k = 0; k < states.length; k++) {
-					transitions[i][j][k] = giveProbTransition(states[i], actions[j], states[k]);
+					transitions[i][j][k] = giveProbTransition(states[i],
+							actions[j], states[k]);
 				}
 			}
 		}
 	}
 
-	private double giveProbTransition(VehicleState s, VehicleAction a, VehicleState nextState) {
+	private double giveProbTransition(VehicleState s, VehicleAction a,
+			VehicleState nextState) {
 		if (a.getTake()) {
-			// TODO: Check first condition of 'if' (should be impossible to happen)
-			if (s.getTaskDestinationCity() != null && s.getTaskDestinationCity().id == nextState.getCurrentCity().id) {
-				// Just have to check the proba of the task for this specific location to spawn
-				return td.probability(nextState.getCurrentCity(), nextState.getTaskDestinationCity());
-			}
-			else return 0d;
-		}
-		else {
+			// TODO: Check first condition of 'if' (should be impossible to
+			// happen)
+			if (s.getTaskDestinationCity() != null
+					&& s.getTaskDestinationCity().id == nextState
+							.getCurrentCity().id) {
+				// Just have to check the proba of the task for this specific
+				// location to spawn
+				return td.probability(nextState.getCurrentCity(),
+						nextState.getTaskDestinationCity());
+			} else
+				return 0d;
+		} else {
 			if (a.getDestinationCity().id == nextState.getCurrentCity().id) {
-				// Just have to check the proba of the task for this specific location to spawn
-				return td.probability(nextState.getCurrentCity(), nextState.getTaskDestinationCity());
-			}
-			else return 0d;
+				// Just have to check the proba of the task for this specific
+				// location to spawn
+				return td.probability(nextState.getCurrentCity(),
+						nextState.getTaskDestinationCity());
+			} else
+				return 0d;
 		}
 	}
 }
