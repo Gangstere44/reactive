@@ -7,15 +7,15 @@
 	<agent name="reactive1">
 		<set class-path="bin/"></set>
 		<set class-name="template.ReactiveTemplate"/>
-		<set discount-factor="1"/>
+		<set discount-factor="0.99"/>
 	</agent>
 	<agent name="reactive2">
 		<set class-path="bin/"></set>
 		<set class-name="template.ReactiveTemplate"></set>
-		<set discount-factor="0.5"></set></agent>
+		<set discount-factor="0.3"></set></agent>
 	<agent name="reactive3">
 		<set class-path="bin/"></set>
-		<set class-name="template.RandomTemplate"></set>
+		<set class-name="template.ReactiveTemplate"></set>
 		<set discount-factor="0"></set></agent>
 
 </agents>

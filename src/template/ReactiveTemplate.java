@@ -19,7 +19,6 @@ public class ReactiveTemplate implements ReactiveBehavior {
 	private static final double EPSILON = 0.000001;
 
 	private Random random;
-	private double pPickup;
 	private int numActions;
 	private Agent myAgent;
 	private Double discount;
@@ -48,9 +47,16 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		// If the property is not present it defaults to 0.95
 		this.discount = agent.readProperty("discount-factor", Double.class,
 				0.95);
+		
+		// Check discount factor is ok, otherwise change it
+		if (this.discount < 0) {
+			this.discount = 0d;
+		}
+		else if (this.discount >= 1) {
+			this.discount = 0.99;
+		}
 
 		this.random = new Random();
-		this.pPickup = discount;
 		this.numActions = 0;
 		this.myAgent = agent;
 
@@ -135,11 +141,10 @@ public class ReactiveTemplate implements ReactiveBehavior {
 						+ "] with reward = " + availableTask.reward);
 			}
 
-			// TODO: Need to check arg here
+			// If doing illegal action, just move to another random neighbor (should not happen) 
 			if (vAction.getDestinationCity() == null
 					|| !vehicle.getCurrentCity().hasNeighbor(
 							vAction.getDestinationCity())) {
-				System.out.println("Destination city was null!!!!!!!");
 				action = new Move(vehicle.getCurrentCity().randomNeighbor(
 						random));
 			}
@@ -262,7 +267,6 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		}
 	}
 
-	// TODO: Should we also use something with the distance????
 	private void giveReward(VehicleState s, int posS, VehicleAction a, int posA) {
 		if (a.getTake() && s.getTaskDestinationCity() != null
 				&& s.getCurrentCity().id != s.getTaskDestinationCity().id) {
@@ -308,15 +312,6 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		}
 	}
 
-	/*
-	 * private double computeAveragePossibleReward(City city) { double
-	 * totalPossibleReward = 0; for (int i = 0; i < numCities; i++) { double
-	 * tmpReward = td.reward(city, topology.cities().get(i)) *
-	 * td.probability(city, topology.cities().get(i)); totalPossibleReward +=
-	 * tmpReward; }
-	 *
-	 * return totalPossibleReward; }
-	 */
 	private double computeAveragePossibleRewardWithDistance(City city) {
 		double totalPossibleReward = 0;
 		for (int i = 0; i < numCities; i++) {
@@ -343,8 +338,6 @@ public class ReactiveTemplate implements ReactiveBehavior {
 	private double giveProbTransition(VehicleState s, VehicleAction a,
 			VehicleState nextState) {
 		if (a.getTake()) {
-			// TODO: Check first condition of 'if' (should be impossible to
-			// happen)
 			if (s.getTaskDestinationCity() != null
 					&& s.getTaskDestinationCity().id == nextState
 							.getCurrentCity().id) {
