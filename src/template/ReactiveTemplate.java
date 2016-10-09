@@ -160,22 +160,6 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		numActions++;
 
 		return action;
-
-		/*
-		 * //Code from before (random) Action action;
-		 *
-		 * if (availableTask == null || random.nextDouble() > pPickup) { City
-		 * currentCity = vehicle.getCurrentCity(); action = new
-		 * Move(currentCity.randomNeighbor(random)); } else { action = new
-		 * Pickup(availableTask); }
-		 *
-		 * if (numActions >= 1) { System.out.println("The total profit after " +
-		 * numActions + " actions is " + myAgent.getTotalProfit() +
-		 * " (average profit: " + (myAgent.getTotalProfit() / (double)
-		 * numActions) + ")"); } numActions++;
-		 *
-		 * return action;
-		 */
 	}
 
 	private VehicleAction getActionForState(City curCity, City destCity) {
@@ -212,8 +196,8 @@ public class ReactiveTemplate implements ReactiveBehavior {
 								* sumTransitions(i, j));
 					}
 				}
-				double maxQValue = (Double) maxQValue(i)[0];
-				VehicleAction maxQAction = (VehicleAction) maxQValue(i)[1];
+				double maxQValue = (Double) maxQValue(i).getLeft();
+				VehicleAction maxQAction = (VehicleAction) maxQValue(i).getRight();
 
 				totalDiff += Math.abs(maxQValue - V[i]);
 
@@ -224,7 +208,7 @@ public class ReactiveTemplate implements ReactiveBehavior {
 		}
 	}
 
-	private Object[] maxQValue(int state) {
+	private Pair<Double, VehicleAction> maxQValue(int state) {
 		double max = 0d;
 		VehicleAction best = null;
 		for (int i = 0; i < actions.length; i++) {
@@ -236,10 +220,7 @@ public class ReactiveTemplate implements ReactiveBehavior {
 				}
 			}
 		}
-		Object[] toReturn = new Object[2];
-		toReturn[0] = max;
-		toReturn[1] = best;
-		return toReturn;
+		return new Pair<Double, VehicleAction>(max, best);
 	}
 
 	private double sumTransitions(int state, int action) {
