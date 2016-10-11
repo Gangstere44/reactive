@@ -12,7 +12,7 @@
 	<agent name="reactive2">
 		<set class-path="bin/"></set>
 		<set class-name="template.ReactiveTemplate"></set>
-		<set discount-factor=".30"></set></agent>
+		<set discount-factor=".0"></set></agent>
 	<agent name="random">
 		<set class-path="bin/"></set>
 		<set class-name="template.RandomTemplate"></set>

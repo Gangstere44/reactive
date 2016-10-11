@@ -227,15 +227,21 @@ public class ReactiveTemplate implements ReactiveBehavior {
 	private Object[] maxQValue(int state) {
 		double max = 0d;
 		VehicleAction best = null;
+		boolean flag = true;
 		for (int i = 0; i < actions.length; i++) {
 			Pair<Integer, Integer> inter = new Pair<Integer, Integer>(state, i);
 			if (Q.containsKey(inter)) {
-				if (Q.get(inter) > max) {
+				if(flag) {
+					max = Q.get(inter);
+					best = actions[i];
+					flag = false;
+				} else if (Q.get(inter) > max) {
 					max = Q.get(inter);
 					best = actions[i];
 				}
 			}
 		}
+
 		Object[] toReturn = new Object[2];
 		toReturn[0] = max;
 		toReturn[1] = best;
@@ -288,9 +294,8 @@ public class ReactiveTemplate implements ReactiveBehavior {
 					td.reward(s.getCurrentCity(), s.getTaskDestinationCity())
 							- s.getCurrentCity().distanceTo(
 									s.getTaskDestinationCity())
-							* costPerKm
-							+ computeAveragePossibleRewardWithDistance(s
-									.getTaskDestinationCity()));
+							* costPerKm);
+							//+ computeAveragePossibleRewardWithDistance(s.getTaskDestinationCity()));
 
 		}
 
@@ -304,9 +309,8 @@ public class ReactiveTemplate implements ReactiveBehavior {
 							s.getTaskDestinationCity());
 				}
 				rewards.put(
-						new Pair<Integer, Integer>(posS, posA),
-						computeAveragePossibleRewardWithDistance(a
-								.getDestinationCity()) - distance * costPerKm);
+						new Pair<Integer, Integer>(posS, posA), - distance * costPerKm);
+						//computeAveragePossibleRewardWithDistance(a.getDestinationCity()) - distance * costPerKm);
 
 			}
 		}
